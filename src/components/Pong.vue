@@ -16,7 +16,7 @@ const player = ref({
   x: 0,
   y: 0,
   width: 8,
-  height: 100,
+  height: 75,
   color: 'white',
 });
 
@@ -24,7 +24,7 @@ const computer = ref({
   x: 0,
   y: 0,
   width: 8,
-  height: 100,
+  height: 75,
   color: 'white',
 });
 
@@ -48,7 +48,7 @@ const log = ref<any[]>([]);
 
 const model = tf.sequential();
 
-model.add(tf.layers.dense({ units: 1, inputShape: [1], useBias: true }));
+model.add(tf.layers.dense({ units: 1, inputShape: [2], useBias: true }));
 model.add(tf.layers.dense({ units: 1, useBias: true }));
 
 model.compile({
@@ -215,7 +215,7 @@ const start = (): void => {
       train(getTrainingData());
       clearLog();
     }
-  }, 5000);
+  }, 10000);
 };
 
 const stop = (): void => {
@@ -227,7 +227,9 @@ const stop = (): void => {
 const computerMove = (): void => {
   if (!canvasRef.value) return;
 
-  const prediction = model.predict(tf.tensor([ball.value.y]));
+  const current = [ball.value.y, getBallDistanceFromComputer()];
+
+  const prediction = model.predict(tf.tensor2d([current]));
 
   const value = prediction.dataSync()[0];
 
@@ -241,11 +243,11 @@ const train = async (data: any[]): Promise<void> => {
 
   console.log('Training model...');
 
-  const trainingData = tf.tensor(data.map(([y1]) => y1));
+  const trainingData = tf.tensor2d(data.map(([y1, , y3]) => [y1, y3]));
   const outputData = tf.tensor(data.map(([, y2]) => y2));
 
   await model.fit(trainingData, outputData, {
-    epochs: 2,
+    epochs: 10,
     callbacks: {
       onEpochEnd: (epoch, logs) => {
         console.log(`Epoch: ${epoch} - Loss: ${logs?.loss}`);
@@ -312,12 +314,12 @@ const stopLog = (): void => {
   logging.value = false;
 };
 
-const formatTrainingData = (p: any, b: any): any => {
-  return [b.y, p.y];
+const formatTrainingData = (p: any, b: any, d: any): any => {
+  return [b.y, p.y, d];
 };
 
 const registerTrainingData = (): void => {
-  log.value.push(formatTrainingData(player.value, ball.value));
+  log.value.push(formatTrainingData(player.value, ball.value, getBallDistanceFromPlayer()));
 };
 
 const clearLog = (): void => {

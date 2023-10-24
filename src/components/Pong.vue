@@ -51,11 +51,6 @@ const model = tf.sequential();
 model.add(tf.layers.dense({ units: 1, inputShape: [2], useBias: true }));
 model.add(tf.layers.dense({ units: 1, useBias: true }));
 
-model.compile({
-  loss: 'meanSquaredError',
-  optimizer: tf.train.adam(0.06),
-});
-
 const clearCanvas = (): void => {
   if (!canvasRef.value) return;
   const ctx = canvasRef.value.getContext('2d');
@@ -213,7 +208,6 @@ const start = (): void => {
   trainingTimer = setInterval(() => {
     if (!training.value) {
       train(getTrainingData());
-      clearLog();
     }
   }, 10000);
 };
@@ -246,8 +240,13 @@ const train = async (data: any[]): Promise<void> => {
   const trainingData = tf.tensor2d(data.map(([y1, , y3]) => [y1, y3]));
   const outputData = tf.tensor(data.map(([, y2]) => y2));
 
+  model.compile({
+    loss: 'meanSquaredError',
+    optimizer: tf.train.adam(0.06),
+  });
+
   await model.fit(trainingData, outputData, {
-    epochs: 10,
+    epochs: 5,
     callbacks: {
       onEpochEnd: (epoch, logs) => {
         console.log(`Epoch: ${epoch} - Loss: ${logs?.loss}`);

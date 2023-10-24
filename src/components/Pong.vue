@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, onMounted, ref, watch } from 'vue';
+import { Ref, computed, onMounted, ref, watch } from 'vue';
 import * as tf from '@tensorflow/tfjs';
 
 const fps = ref(30);
@@ -197,13 +197,13 @@ const createLoop = (): void => {
   }, 1000 / fps.value);
 };
 
-const getBallDistanceFromPlayer = (): number => {
+const ballDistanceFromPlayer = computed((): number => {
   return Math.abs(ball.value.x - player.value.x);
-};
+});
 
-const getBallDistanceFromComputer = (): number => {
+const ballDistanceFromComputer = computed((): number => {
   return Math.abs(ball.value.x - computer.value.x);
-};
+});
 
 let trainingTimer: any = null;
 
@@ -227,7 +227,7 @@ const stop = (): void => {
 const computerMove = (): void => {
   if (!canvasRef.value) return;
 
-  const current = [ball.value.y, getBallDistanceFromComputer()];
+  const current = [ball.value.y, ballDistanceFromComputer.value];
 
   const prediction = model.predict(tf.tensor2d([current]));
 
@@ -319,7 +319,7 @@ const formatTrainingData = (p: any, b: any, d: any): any => {
 };
 
 const registerTrainingData = (): void => {
-  log.value.push(formatTrainingData(player.value, ball.value, getBallDistanceFromPlayer()));
+  log.value.push(formatTrainingData(player.value, ball.value, ballDistanceFromPlayer.value));
 };
 
 const clearLog = (): void => {
